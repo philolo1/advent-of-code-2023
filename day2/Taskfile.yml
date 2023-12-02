@@ -13,3 +13,9 @@ tasks:
   ts-1-puzzle:
     cmds:
       - bun one.ts ./1-puzzle.txt
+  ts-2-sample:
+    cmds:
+      - bun two.ts ./2-sample.txt
+  ts-2-puzzle:
+    cmds:
+      - bun two.ts ./1-puzzle.txt

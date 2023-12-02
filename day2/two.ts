@@ -8,46 +8,50 @@ function main() {
 
   let sum = 0;
 
-  let names = [
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-  ];
-
+  let counter = 0;
   for (const line of lines) {
+    counter++;
     // Process each line here
-    let items = [];
-    for (let i = 0; i < line.length; i++) {
-      if ("123456789".includes(line[i])) {
-        items.push(line[i]);
-      }
+    let newLine = line.substring(line.indexOf(":") + 1).trim();
+    if (newLine.length == 0) {
+      continue;
+    }
+    // console.log("newLine", newLine);
+    let items = newLine.trim().split(";");
 
-      for (let j = 0; j < names.length; j++) {
-        let word = line.substring(i, i + names[j].length);
-        if (word === names[j]) {
-          console.log("true", word);
-          items.push(`${j + 1}`);
+    let red = 0;
+    let blue = 0;
+    let green = 0;
+
+    for (let item of items) {
+      let colors = item.split(",");
+      // console.log("colors", colors);
+
+      for (let col of colors) {
+        let data = col.trim().split(" ");
+        let number = parseInt(data[0]);
+        let c = data[1];
+
+        // console.log("parse: ", number, "color: ", c);
+        if (c.trim() === "red" && number > red) {
+          red = number;
+        }
+
+        if (c.trim() === "blue" && number > blue) {
+          blue = number;
+        }
+
+        if (c.trim() === "green" && number > green) {
+          green = number;
         }
       }
     }
 
-    if (items.length > 0) {
-      let num = items[0] + items[items.length - 1];
-      console.log("val: ", num, items);
-      let val = parseInt(num);
-      sum += val;
-    }
-
-    console.log("SUM: ", sum);
+    sum += red * blue * green;
   }
 
   console.log("File reading finished.");
+  console.log("sum: ", sum);
 }
 
 main();
