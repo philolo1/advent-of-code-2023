@@ -1,0 +1,15 @@
+version: '3'
+
+tasks:
+  go-1-sample:
+    cmds:
+      - go run one.go ./1-sample.txt
+  go-1-puzzle:
+    cmds:
+      - go run one.go ./1-puzzle.txt
+  ts-1-sample:
+    cmds:
+      - bun one.ts ./1-sample.txt
+  ts-1-puzzle:
+    cmds:
+      - bun one.ts ./1-puzzle.txt
