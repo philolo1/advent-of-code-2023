@@ -35,18 +35,9 @@ func main() {
 		numArr := make([]string, 0)
 
 		for index, value := range arr {
-			// fmt.Println(index, value)
+			fmt.Println(index, value)
 			if strings.Contains("0123456789", value) {
 				numArr = append(numArr, value)
-			} else {
-				numbers := []string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
-
-				for nIndex, num := range numbers {
-					if index+len(num) <= len(line) && num == line[index:index+len(num)] {
-						numArr = append(numArr, strconv.Itoa(nIndex+1))
-					}
-				}
-
 			}
 		}
 

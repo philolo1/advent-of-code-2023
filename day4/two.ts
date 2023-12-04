@@ -4,48 +4,58 @@ function main() {
   const filePath = process.argv[2]; // Replace with the path to your file
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
-  const lines = fileContent.split("\n");
+  const lines = fileContent.split("\n").filter((e) => e.length > 0);
 
   let sum = 0;
 
-  let names = [
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-  ];
+  let amount: Array<number> = [];
 
-  for (const line of lines) {
-    // Process each line here
-    let items = [];
-    for (let i = 0; i < line.length; i++) {
-      if ("123456789".includes(line[i])) {
-        items.push(line[i]);
-      }
-
-      for (let j = 0; j < names.length; j++) {
-        let word = line.substring(i, i + names[j].length);
-        if (word === names[j]) {
-          console.log("true", word);
-          items.push(`${j + 1}`);
-        }
-      }
-    }
-
-    if (items.length > 0) {
-      let num = items[0] + items[items.length - 1];
-      console.log("val: ", num, items);
-      let val = parseInt(num);
-      sum += val;
-    }
-
-    console.log("SUM: ", sum);
+  for (let index = 0; index < lines.length; index++) {
+    amount[index] = 1;
   }
+
+  for (let index = 0; index < lines.length; index++) {
+    let line = lines[index];
+
+    // Process each line here
+    let cardLine = line.split(":")[1].trim();
+    let [left, right] = cardLine.split("|");
+
+    // console.log("left: ", left, "right: ", right);
+
+    const winning: { [key: string]: number } = {};
+
+    for (let item of left.trim().split(" ")) {
+      if (item.trim().length == 0) {
+        continue;
+      }
+      if (winning[item.trim()] == undefined) {
+        winning[item.trim()] = 1;
+      } else {
+        console.log("found", item.trim(), " help", line);
+        winning[item.trim()]++;
+      }
+    }
+
+    let count = 0;
+
+    for (let item of right.trim().split(" ")) {
+      if (winning[item.trim()] >= 1) {
+        winning[item.trim()]--;
+        count++;
+      }
+    }
+
+    while (count > 0) {
+      amount[(index + count) as number] += amount[index];
+      count--;
+    }
+
+    sum += amount[index];
+
+    // console.log("winning", winning);
+  }
+  console.log("SUM: ", sum);
 
   console.log("File reading finished.");
 }
