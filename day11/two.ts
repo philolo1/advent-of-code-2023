@@ -1,62 +1,77 @@
 import * as fs from "fs";
 
+let NUM = 1_000_000;
+
 function main() {
   const filePath = process.argv[2]; // Replace with the path to your file
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
   const lines = fileContent.split("\n").filter((x) => x.trim().length > 0);
 
-  let sum = 0;
-
-  for (let line of lines) {
-    let items = line
-      .split(" ")
-      .map((x) => x.trim())
-      .filter((x) => x.length > 0)
-      .map((x) => parseInt(x))
-      .reverse();
-
-    let newArr = [];
-    newArr.push(items);
-
-    let index = 0;
-
-    while (true) {
-      let arr = [];
-
-      // check if all values of array are equal
-      let allEqual = newArr[index].every((val, i, arr) => val === arr[0]);
-
-      if (allEqual) {
-        break;
-      }
-
-      for (let i = 0; i < newArr[index].length - 1; i++) {
-        arr.push(newArr[index][i + 1] - newArr[index][i]);
-      }
-
-      newArr.push(arr);
-      index++;
-    }
-
-    newArr[index].push(newArr[index][newArr[index].length - 1]);
-    console.log(newArr);
-
-    for (let i = index - 1; i >= 0; i--) {
-      newArr[i].push(
-        newArr[i][newArr[i].length - 1] +
-          newArr[i + 1][newArr[i + 1].length - 1],
-      );
-    }
-
-    console.log("items", items);
-
-    console.log("newArr", newArr[0]);
-
-    sum += newArr[0][newArr[0].length - 1];
+  let arr: Array<Array<string>> = [];
+  for (const line of lines) {
+    arr.push(line.split(""));
   }
 
-  console.log("SUM", sum);
+  // create type cordinates
+  type Cordinates = {
+    x: number;
+    y: number;
+  };
+
+  let cordinateArr: Array<Cordinates> = [];
+
+  for (let y = 0; y < arr.length; y++) {
+    for (let x = 0; x < arr[y].length; x++) {
+      if (arr[y][x] === "#") {
+        cordinateArr.push({ y, x });
+      }
+    }
+  }
+
+  cordinateArr = cordinateArr.sort((a, b) => {
+    return a.x - b.x;
+  });
+
+  console.log("coord", cordinateArr);
+
+  let plus = 0;
+  let lastX = cordinateArr[0].x;
+
+  for (let i = 1; i < cordinateArr.length; i++) {
+    if (cordinateArr[i].x > lastX) {
+      plus += (cordinateArr[i].x - lastX - 1) * (NUM - 1);
+      lastX = cordinateArr[i].x;
+    }
+    cordinateArr[i].x += plus;
+  }
+
+  cordinateArr = cordinateArr.sort((a, b) => {
+    return a.y - b.y;
+  });
+
+  plus = 0;
+  let lastY = cordinateArr[0].y;
+
+  for (let i = 1; i < cordinateArr.length; i++) {
+    if (cordinateArr[i].y > lastY) {
+      plus += (cordinateArr[i].y - lastY - 1) * (NUM - 1);
+      lastY = cordinateArr[i].y;
+    }
+    cordinateArr[i].y += plus;
+  }
+
+  let sum = 0;
+
+  for (let a = 0; a < cordinateArr.length; a++) {
+    for (let b = a + 1; b < cordinateArr.length; b++) {
+      sum +=
+        Math.abs(cordinateArr[a].x - cordinateArr[b].x) +
+        Math.abs(cordinateArr[a].y - cordinateArr[b].y);
+    }
+  }
+
+  console.log("RES: ", sum);
 }
 
 main();
