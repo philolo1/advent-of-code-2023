@@ -1,113 +1,96 @@
 import * as fs from "fs";
 
-function calcDamage(
-  leftPos: number,
-  rightPos: number,
-  str: string,
-  arr: Array<number>,
-  res: Map<string, number>,
-): number {
-  if (rightPos === arr.length) {
-    return 0;
-  }
+function isVertical(
+  x: number,
+  X: number,
+  Y: number,
+  lines: Array<string>,
+): boolean {
+  let mismatch = 0;
+  for (let y = 0; y < Y; y++) {
+    let x1 = x - 1;
+    let x2 = x;
 
-  if (leftPos + arr[rightPos] > str.length) {
-    return 0;
-  }
-
-  for (let x = 0; x < arr[rightPos]; x++) {
-    if (str[leftPos + x] === ".") {
-      return 0;
+    while (x1 >= 0 && x2 < X) {
+      if (lines[y][x1] != lines[y][x2]) {
+        mismatch++;
+        if (mismatch === 2) {
+          return false;
+        }
+      }
+      x1--;
+      x2++;
     }
   }
-
-  if (leftPos + arr[rightPos] == str.length) {
-    return calc(leftPos + arr[rightPos], rightPos + 1, str, arr, res);
-  }
-
-  if (
-    str[leftPos + arr[rightPos]] == "?" ||
-    str[leftPos + arr[rightPos]] == "."
-  ) {
-    return calc(leftPos + arr[rightPos] + 1, rightPos + 1, str, arr, res);
-  } else {
-    return 0;
-  }
+  return mismatch === 1;
 }
 
-function calc(
-  leftPos: number,
-  rightPos: number,
-  str: string,
-  arr: Array<number>,
-  res: Map<string, number>,
-): number {
-  let keyVal = `${leftPos},${rightPos}`;
+function isHorizontal(
+  y: number,
+  X: number,
+  Y: number,
+  lines: Array<string>,
+): boolean {
+  let mismatch = 0;
+  for (let x = 0; x < X; x++) {
+    let y1 = y - 1;
+    let y2 = y;
 
-  let el = res.get(keyVal);
-
-  if (el != null) {
-    return el;
-  }
-
-  if (leftPos == str.length) {
-    if (rightPos == arr.length) {
-      // console.log("ONE");
-      return 1;
-    } else {
-      return 0;
+    while (y1 >= 0 && y2 < Y) {
+      if (lines[y1][x] != lines[y2][x]) {
+        mismatch++;
+        if (mismatch === 2) {
+          return false;
+        }
+      }
+      y1--;
+      y2++;
     }
   }
-
-  if (leftPos > str.length) {
-    return 0;
-  }
-
-  let sol1 = 0;
-  let sol2 = 0;
-
-  if (str[leftPos] === "." || str[leftPos] === "?") {
-    sol1 = calc(leftPos + 1, rightPos, str, arr, res);
-  }
-
-  if (str[leftPos] === "#" || str[leftPos] === "?") {
-    sol2 = calcDamage(leftPos, rightPos, str, arr, res);
-  }
-
-  res.set(keyVal, sol1 + sol2);
-  return sol1 + sol2;
+  return mismatch === 1;
 }
 
 function main() {
   const filePath = process.argv[2]; // Replace with the path to your file
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
-  const lines = fileContent.split("\n").filter((x) => x.trim().length > 0);
+  const fields = fileContent.split("\n\n");
 
-  let sum = 0;
-  for (let line of lines) {
-    let [input, numbersStr] = line.split(" ");
-    let numbers = numbersStr.split(",").map((x) => parseInt(x));
+  let rows = 0;
+  let columns = 0;
 
-    console.log("data", input, numbers);
-    let res = new Map<string, number>();
+  for (let f of fields) {
+    console.log("Field: ", f);
+    let lines = f
+      .split("\n")
+      .map((x) => x.trim())
+      .filter((x) => x.length > 0);
 
-    let newStr = input;
-    for (let i = 0; i < 4; i++) {
-      newStr += "?" + input;
+    console.log("lines", lines);
+
+    let Y = lines.length;
+    let X = lines[0].length;
+
+    // 0 .. x -1  | x ... X - 1
+    for (let x = 1; x < X; x++) {
+      if (isVertical(x, X, Y, lines)) {
+        console.log("found vertical", x);
+        columns += x;
+        break;
+      }
     }
-    let newArr = numbers;
-    for (let i = 0; i < 4; i++) {
-      newArr = [...newArr, ...numbers];
-    }
 
-    let val = calc(0, 0, newStr, newArr, res);
-    console.log("RES: ", val);
-    sum += val;
-    // console.log("RS", res);
+    // 0 .. y -1  | y ... Y - 1
+    for (let y = 1; y < Y; y++) {
+      if (isHorizontal(y, X, Y, lines)) {
+        console.log("found horizontal", y);
+        rows += y;
+        break;
+      }
+    }
   }
 
-  console.log("SUM: ", sum);
+  console.log("res: ", rows * 100 + columns);
 }
 
 main();
