@@ -1,96 +1,176 @@
 import * as fs from "fs";
 
-function isVertical(
-  x: number,
-  X: number,
-  Y: number,
-  lines: Array<string>,
-): boolean {
-  let mismatch = 0;
-  for (let y = 0; y < Y; y++) {
-    let x1 = x - 1;
-    let x2 = x;
+let X: number;
+let Y: number;
+let lines: string[][];
 
-    while (x1 >= 0 && x2 < X) {
-      if (lines[y][x1] != lines[y][x2]) {
-        mismatch++;
-        if (mismatch === 2) {
-          return false;
-        }
-      }
-      x1--;
-      x2++;
-    }
-  }
-  return mismatch === 1;
-}
-
-function isHorizontal(
-  y: number,
-  X: number,
-  Y: number,
-  lines: Array<string>,
-): boolean {
-  let mismatch = 0;
-  for (let x = 0; x < X; x++) {
-    let y1 = y - 1;
-    let y2 = y;
-
-    while (y1 >= 0 && y2 < Y) {
-      if (lines[y1][x] != lines[y2][x]) {
-        mismatch++;
-        if (mismatch === 2) {
-          return false;
-        }
-      }
-      y1--;
-      y2++;
-    }
-  }
-  return mismatch === 1;
+function print() {
+  // return;
+  // for (let y = 0; y < Y; y++) {
+  //   console.log(lines[y].join(""));
+  // }
 }
 
 function main() {
   const filePath = process.argv[2]; // Replace with the path to your file
 
   const fileContent = fs.readFileSync(filePath, "utf-8");
-  const fields = fileContent.split("\n\n");
+  lines = fileContent
+    .split("\n")
+    .map((x) => x.trim().split(""))
+    .filter((x) => x.length > 0);
 
-  let rows = 0;
-  let columns = 0;
+  Y = lines.length;
+  X = lines[0].length;
 
-  for (let f of fields) {
-    console.log("Field: ", f);
-    let lines = f
-      .split("\n")
-      .map((x) => x.trim())
-      .filter((x) => x.length > 0);
+  print();
 
-    console.log("lines", lines);
+  let myMap: Map<number, Array<number>> = new Map();
 
-    let Y = lines.length;
-    let X = lines[0].length;
+  let loadArr: number[] = [];
 
-    // 0 .. x -1  | x ... X - 1
-    for (let x = 1; x < X; x++) {
-      if (isVertical(x, X, Y, lines)) {
-        console.log("found vertical", x);
-        columns += x;
-        break;
+  for (let circle = 0; circle <= 1000; circle++) {
+    // console.log("\n GRAPH: NORTH");
+    // north
+    for (let x = 0; x < X; x++) {
+      let y = 0;
+      while (y < Y) {
+        let pos = y;
+        let counter = 0;
+        while (y < Y && "O.".includes(lines[y][x])) {
+          if ("O" === lines[y][x]) {
+            counter++;
+          }
+          lines[y][x] = ".";
+          y++;
+        }
+        counter--;
+        while (counter >= 0) {
+          lines[pos + counter][x] = "O";
+          counter--;
+        }
+        y++;
+      }
+    }
+    print();
+
+    // console.log("GRAPH WEST");
+    for (let y = 0; y < Y; y++) {
+      let x = 0;
+      while (x < X) {
+        let pos = x;
+        let counter = 0;
+        while (x < X && "O.".includes(lines[y][x])) {
+          if ("O" === lines[y][x]) {
+            counter++;
+          }
+          lines[y][x] = ".";
+          x++;
+        }
+        counter--;
+        while (counter >= 0) {
+          lines[y][pos + counter] = "O";
+          counter--;
+        }
+        x++;
       }
     }
 
-    // 0 .. y -1  | y ... Y - 1
-    for (let y = 1; y < Y; y++) {
-      if (isHorizontal(y, X, Y, lines)) {
-        console.log("found horizontal", y);
-        rows += y;
-        break;
+    print();
+
+    // console.log("\n GRAPH: SOUTH");
+    // north
+    for (let x = 0; x < X; x++) {
+      let y = Y - 1;
+      while (y >= 0) {
+        let pos = y;
+        let counter = 0;
+        while (y >= 0 && "O.".includes(lines[y][x])) {
+          if ("O" === lines[y][x]) {
+            counter++;
+          }
+          lines[y][x] = ".";
+          y--;
+        }
+        counter--;
+        while (counter >= 0) {
+          lines[pos - counter][x] = "O";
+          counter--;
+        }
+        y--;
       }
     }
+    print();
+
+    // console.log("\n GRAPH EAST");
+    for (let y = 0; y < Y; y++) {
+      let x = X - 1;
+      while (x >= 0) {
+        let pos = x;
+        let counter = 0;
+        while (x >= 0 && "O.".includes(lines[y][x])) {
+          if ("O" === lines[y][x]) {
+            counter++;
+          }
+          lines[y][x] = ".";
+          x--;
+        }
+        counter--;
+        while (counter >= 0) {
+          lines[y][pos - counter] = "O";
+          counter--;
+        }
+        x--;
+      }
+    }
+
+    print();
+
+    let load = 0;
+    for (let y = 0; y < Y; y++) {
+      for (let x = 0; x < X; x++) {
+        if (lines[y][x] == "O") {
+          load += Y - y;
+        }
+      }
+    }
+    console.log(circle, load);
+
+    if (circle > 500) {
+      if (myMap.get(load) == null) {
+        myMap.set(load, [circle]);
+      } else {
+        let val = myMap.get(load) as number[];
+        val.push(circle);
+        myMap.set(load, val);
+      }
+    }
+
+    loadArr.push(load);
   }
 
-  console.log("res: ", rows * 100 + columns);
+  let myArr = myMap.get(loadArr[loadArr.length - 1]) as number[];
+  let circleLength = myArr[myArr.length - 1] - myArr[myArr.length - 2];
+
+  console.log("circleLength: ", circleLength);
+  console.log(
+    "a: ",
+    loadArr[loadArr.length - 1],
+    loadArr[loadArr.length - 1 - circleLength],
+  );
+
+  console.log(
+    "a: ",
+    loadArr[loadArr.length - 4],
+    loadArr[loadArr.length - 4 - circleLength],
+  );
+
+  let result = (1_000_000_000 - loadArr.length - circleLength) % circleLength;
+
+  console.log("RES: ", loadArr[loadArr.length - 1 - circleLength + result]);
+
+  // 14
+  //
 }
 
 main();
