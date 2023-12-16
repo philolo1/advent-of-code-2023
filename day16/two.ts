@@ -1,22 +1,18 @@
 import * as fs from "fs";
 
-function calc(str: string): number {
-  let val = 0;
-
-  for (let ch of str) {
-    let num = ch.charCodeAt(0);
-    val += num;
-    val *= 17;
-    val %= 256;
-  }
-
-  return val;
+enum Direction {
+  Up = 0,
+  Down = 1,
+  Left = 2,
+  Right = 3,
 }
 
-type Obj = {
-  label: string;
-  num: number;
-};
+let X: number = 0;
+let Y: number = 0;
+
+function isValid(y: number, x: number): boolean {
+    return y >= 0 && y < Y && x >= 0 && x < X;
+}
 
 function main() {
   const filePath = process.argv[2]; // Replace with the path to your file
@@ -27,68 +23,193 @@ function main() {
     .map((x) => x.trim())
     .filter((x) => x.length > 0);
 
-  console.log("lines", lines);
+  Y = lines.length;
+  X = lines[0].length;
 
-  let items = lines[0].split(",");
 
-  let box: Map<number, Obj[]> = new Map();
+  let startPos = [];
 
-  for (let i = 0; i < 256; i++) {
-    box.set(i, []);
+  for (let y = 0; y < Y; y++) {
+      startPos.push({x: 0, y: y, dir: Direction.Right})
+      startPos.push({x: X-1, y: y, dir: Direction.Left})
   }
 
-  console.log("items", items);
+  for (let x = 0; x < Y; x++) {
+      startPos.push({x: x, y: 0, dir: Direction.Down});
+      startPos.push({x: x, y: Y-1, dir: Direction.Up})
+  }
 
-  for (let item of items) {
-    if (item[item.length - 1] === "-") {
-      let label = item.replace("-", "");
-      console.log("LABEL", label, label.length);
-      let num = calc(label);
-      let arr = box.get(num) as Obj[];
 
-      arr = arr.filter((x) => x.label != label);
+  let maxCounter = 0;
 
-      box.set(num, arr);
-    } else if (item.includes("=")) {
-      let [label, val] = item.split("=");
-      let boxNumber = calc(label);
-      let num = parseInt(val);
+  while (true) {
+      let stackEl = startPos.pop();
 
-      let arr = box.get(boxNumber) as Obj[];
-
-      let hasFound = false;
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i].label === label) {
-          arr[i].num = num;
-          hasFound = true;
+      if (stackEl == null) {
           break;
-        }
       }
 
-      if (!hasFound) {
-        arr.push({ label, num });
+
+      let visited: Map<string, boolean>= new Map();
+
+      let stack: Array<{x: number, y:number, dir: Direction}> = [];
+
+      stack.push(stackEl);
+
+      let counter = 0;
+      let visited2: Map<string, boolean>= new Map();
+
+      while (true ) {
+          let el = stack.pop();
+
+          if (el == undefined) {
+              break;
+          }
+
+          let {x, y, dir} = el;
+
+          let visitedKey = `${y},${x},${dir}`;
+
+          if (visited.get(visitedKey) === true) {
+              continue;
+          }
+
+          visited.set(visitedKey, true)
+
+          if (visited2.get(`${y},${x}`) == undefined) {
+              counter++;
+              visited2.set(`${y},${x}`, true);
+          }
+
+          let val = lines[y][x];
+
+
+
+          if (val === '.') {
+              let y2 = y;
+              let x2 = x;
+              if (dir === Direction.Right) {
+                  x2++;
+              } else if (dir === Direction.Left) {
+                  x2--;
+              } else if (dir === Direction.Up) {
+                  y2--;
+              } else { // direction down
+                  y2++;
+              }
+
+              if (isValid(y2, x2)) {
+                  stack.push({x: x2, y: y2, dir});
+              }
+          } else if (val === '/') {
+              let newDirection = dir;
+              let y2 = y;
+              let x2 = x;
+
+              if (dir === Direction.Right) {
+                  newDirection = Direction.Up;
+                  y2--;
+              } else if (dir === Direction.Down) {
+                  newDirection = Direction.Left;
+                  x2--;
+              } else if (dir === Direction.Left) {
+                  newDirection = Direction.Down;
+                  y2++;
+              } else { // direction up
+                  newDirection = Direction.Right;
+                  x2++;
+              }
+              if (isValid(y2, x2)) {
+                  stack.push({x: x2, y: y2, dir: newDirection});
+              }
+          } else if (val === '\\') {
+              let newDirection = dir;
+              let y2 = y;
+              let x2 = x;
+
+              if (dir === Direction.Right) {
+                  newDirection = Direction.Down;
+                  y2++;
+              } else if (dir === Direction.Down) {
+                  newDirection = Direction.Right;
+                  x2++;
+              } else if (dir === Direction.Left) {
+                  newDirection = Direction.Up;
+                  y2--;
+              } else { // direction up
+                  newDirection = Direction.Left;
+                  x2--;
+              }
+              if (isValid(y2, x2)) {
+                  stack.push({x: x2, y: y2, dir: newDirection});
+              }
+          } else if (val === '-') { 
+              let newDirection = dir;
+              let y2 = y;
+              let x2 = x;
+
+              if (dir === Direction.Right) {
+                  x2++;
+                  if (isValid(y2, x2)) {
+                      stack.push({x: x2, y: y2, dir: newDirection});
+                  }
+              } else if (dir === Direction.Left) {
+                  x2--;
+                  if (isValid(y2, x2)) {
+                      stack.push({x: x2, y: y2, dir: newDirection});
+                  }
+              } else {
+                  if (isValid(y, x-1)) {
+                      stack.push({x: x-1, y: y, dir: Direction.Left});
+                  }
+                  if (isValid(y, x+1)) {
+                      stack.push({x: x+1, y: y, dir: Direction.Right});
+                  }
+              }
+          } else if (val === '|') { 
+              let newDirection = dir;
+              let y2 = y;
+              let x2 = x;
+
+              if (dir === Direction.Up) {
+                  y2--;
+                  if (isValid(y2, x2)) {
+                      stack.push({x: x2, y: y2, dir: newDirection});
+                  }
+              } else if (dir === Direction.Down) {
+                  y2++;
+                  if (isValid(y2, x2)) {
+                      stack.push({x: x2, y: y2, dir: newDirection});
+                  }
+              } else {
+                  if (isValid(y+1, x)) {
+                      stack.push({x: x, y: y+1, dir: Direction.Down});
+                  }
+                  if (isValid(y-1, x)) {
+                      stack.push({x: x, y: y - 1, dir: Direction.Up});
+                  }
+              }
+          } else {
+              throw new Error(`Unknown character :'${val}'`);
+          }
+
+
+
       }
 
-      box.set(boxNumber, arr);
-    } else {
-      throw Error("Cannot parse :" + item);
-    }
+      console.log("COUNTER: ", counter);
+
+      if (counter > maxCounter) {
+           maxCounter = counter;
+      }
   }
 
-  let sum = 0;
-  for (let i = 0; i < 256; i++) {
-    let arr = box.get(i) as Obj[];
+  console.log("RES: ", maxCounter);
 
-    for (let j = 0; j < arr.length; j++) {
-      sum += (i + 1) * arr[j].num * (j + 1);
-    }
-    //
-    // if (arr.length > 0) {
-    //   console.log(i, arr);
-    // }
-  }
 
-  console.log("SUM", sum);
+
+
+
 }
 
 main();
